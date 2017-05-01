@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 
 /**
  * Created by ytseitkin on 3/16/2017.
@@ -23,9 +24,10 @@ public class RequestThread implements Runnable {
         httpResponse = new HTTPResponse();
     }
 
-    protected String parseRequest(){
+    protected boolean parseRequest(){
 
-        StringBuilder request = new StringBuilder();
+        //StringBuilder request = new StringBuilder();
+        ArrayList<Byte> request = new ArrayList<>();
 
         try{
             byte[] buffer = new byte[1024];
@@ -42,25 +44,27 @@ public class RequestThread implements Runnable {
 
             while(is.available() > 0) {
                 read = is.read(buffer);
-                String output = new String(buffer, 0, read);
-                request.append(output);
+
+                for(int i=0;i<read;i++)
+                    request.add(buffer[i]);
 
             }
-
-            if(request.length()==0){
-                System.out.println("Gevald");
-            }
-
 
         } catch (Exception e){
-            return null;
+            return false;
         }
 
-        if(!httpRequest.parseRequest(request.toString())){
-            return null;
+        byte [] arr = new byte[request.size()];
+
+        for(int i=0;i<arr.length;i++)
+            arr[i] = request.get(i);
+
+        if(!httpRequest.parseRequest(arr)){
+            return false;
         }
 
-        return request.toString();
+
+        return true;
     }
 
     protected void executeRequest(){
@@ -190,9 +194,7 @@ public class RequestThread implements Runnable {
     @Override
     public void run() {
 
-        String request = parseRequest();
-
-        if(request==null){
+        if(!parseRequest()){
 
             if(httpRequest.getMessageBody() == null){
                 httpResponse = new HTTPResponse(400);
@@ -209,7 +211,7 @@ public class RequestThread implements Runnable {
 
         }
         else{
-            System.out.println(request);
+            System.out.println("Request processed");
             executeRequest();
         }
 

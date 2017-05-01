@@ -192,11 +192,15 @@ public class FileManager {
         if(temp==null)
             return (new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR));
 
-        String contentMessage;
-        try {
-            contentMessage = new String(request.getMessageBody().getBytes(),"utf8");
-        } catch (UnsupportedEncodingException e){
-            return (new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR));
+        byte[] contentMessage = request.getMessageBody();
+
+        if(types.get(0).getValue().contains("text")) {
+            try {
+                String convert = new String(request.getMessageBody(), types.get(0).getExtra());
+                contentMessage = convert.getBytes("utf8");
+            } catch (UnsupportedEncodingException e) {
+                return (new FileManagerResponse(FileManagerResponse.fileStatus.CONFLICT));
+            }
         }
 
         //TODO lock file
@@ -213,7 +217,7 @@ public class FileManager {
             return new FileManagerResponse(FileManagerResponse.fileStatus.SERVICE_UNAVAILABLE);
 
         try (OutputStream outputStream = new FileOutputStream(file,true)){
-            outputStream.write(contentMessage.getBytes());
+            outputStream.write(contentMessage);
             cache.delete(file.getAbsolutePath());
         } catch (IOException e){
             lock.writeLock().unlock();
@@ -297,18 +301,14 @@ public class FileManager {
 
         File temp = createTempFile(file,RequestVerb.PUT,request.getID());
 
-//        try{
-//            Thread.sleep(20000);
-//        }catch(InterruptedException e){
-//            e.printStackTrace();
-//        }
-
         try(OutputStream output = new FileOutputStream(file)) {
 
-            if(format.toLowerCase().contains("text"))
-                output.write(request.getMessageBody().getBytes("utf8"));
+            if(format.toLowerCase().contains("text")){
+                String convert = new String(request.getMessageBody(),encoding);
+                output.write(convert.getBytes("utf8"));
+            }
             else
-                output.write(request.getMessageBody().getBytes());
+                output.write(request.getMessageBody());
 
             if(!existed)
                 fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.CREATED);
@@ -316,7 +316,7 @@ public class FileManager {
                 fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.SUCCESS);
 
         } catch (IOException e) {
-            fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR);
+            fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.CONFLICT);
         }
 
         lock.writeLock().unlock();

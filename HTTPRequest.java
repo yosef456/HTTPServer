@@ -1,9 +1,6 @@
 package HTTPServer;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
+import java.util.*;
 
 /**
  * Created by ytseitkin on 3/16/2017.
@@ -14,7 +11,7 @@ public class HTTPRequest {
     private RequestVerb verb;
     private String httpVersion;
     private String url;
-    private String messageBody;
+    private byte[] messageBody;
     private int ID;
 
     public HTTPRequest(int ID){
@@ -46,16 +43,34 @@ public class HTTPRequest {
 
         return true;
     }
-    public boolean parseRequest(String request){
+    public boolean parseRequest(byte[] request){
 
-        String [] parts = request.split("\r\n\r\n");
+        int indexOfMessage = 0;
 
-        if(parts.length>1)
-            messageBody = parts[1];
-        else
-            messageBody = "";
+        for(int i=0;i<request.length-3;i++){
+            if(request[i]=='\r' && request[i+1] == '\n' && request[i+2]=='\r' && request[i+3] == '\n'){
+                indexOfMessage = i;
+                break;
+            }
+        }
 
-        String[] headersString = parts[0].split("\r\n");
+        if(indexOfMessage==0){
+            return false;
+        }
+
+        byte[] headersBytes  = new byte[indexOfMessage];
+
+        byte[] message = new byte[request.length-indexOfMessage -4];
+
+        for(int i=0;i<indexOfMessage;i++)
+            headersBytes[i] = request[i];
+
+        for(int i=0;i<message.length;i++)
+            message[i] = request[i + 4 + indexOfMessage];
+
+        messageBody = message;
+
+        String[] headersString = (new String(headersBytes)).split("\r\n");
 
         if(!headersString[0].matches(HTTPRequestRegex.requestLine)){
             messageBody = null;
@@ -65,7 +80,6 @@ public class HTTPRequest {
         String [] firstLine = headersString[0].split(" ");
 
         if(!Arrays.stream(RequestVerb.values()).anyMatch(VRequest -> VRequest.toString().equals(firstLine[0]))){
-            messageBody = firstLine[0];
             return false;
         }
 
@@ -134,7 +148,7 @@ public class HTTPRequest {
 
     public int getID(){ return ID;}
 
-    public String getMessageBody(){ return messageBody;}
+    public byte[] getMessageBody(){ return messageBody;}
 
     public ArrayList<HeaderValue> getHeader(String header){
         return headers.get(header);
