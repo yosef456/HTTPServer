@@ -19,30 +19,6 @@ public class HTTPRequest {
         headers = new HashMap<>();
     }
 
-//
-//    public static boolean checkIfFormatted(String request){
-//
-//        String [] lines = request.split("\r\n");
-//
-//        if(lines.length<2)
-//            return false;
-//
-//        if(!lines[0].matches(HTTPRequestRegex.requestLine))
-//            return false;
-//
-//        String headerValue = "(" + HTTPRequestRegex.token + "+|\\*{1})" + "+" + "(;" + HTTPRequestRegex.token
-//                + "+=(([1]|[0]|0\\.[0-9])|" + HTTPRequestRegex.token + "+){1})?";
-//
-//
-//        String values = headerValue + "(," + headerValue +  ")*";
-//
-//        for(int i=2; !lines[i].equals(""); i++){
-//            if (!lines[i].startsWith("User-Agent:") && !lines[i].matches(HTTPRequestRegex.fieldName + ": "+ values))
-//                return false;
-//        }
-//
-//        return true;
-//    }
     public boolean parseRequest(byte[] request){
 
         int indexOfMessage = 0;

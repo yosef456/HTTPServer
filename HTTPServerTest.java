@@ -11,6 +11,9 @@ import java.util.Properties;
  * Created by ytseitkin on 5/2/2017.
  */
 public class HTTPServerTest extends TestCase {
+
+    private String fileRoot = "C:\\Users\\ytseitkin";
+
     public void testIsInt() throws Exception {
 
         assertTrue(HTTPServer.isInt("5"));
@@ -34,7 +37,7 @@ public class HTTPServerTest extends TestCase {
 
         prop.setProperty("freshTime","9999999");
 
-        prop.setProperty("fileBase","C:\\Users\\ytseitkin");
+        prop.setProperty("fileRoot",fileRoot);
 
         HTTPServer httpServer = new HTTPServer(prop);
 

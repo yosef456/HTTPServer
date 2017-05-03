@@ -19,6 +19,8 @@ public class AcceptanceTest extends TestCase {
 
     File file;
 
+    private String fileRoot = "C:\\Users\\ytseitkin";
+
     public void setUp() throws Exception {
         super.setUp();
 
@@ -32,7 +34,7 @@ public class AcceptanceTest extends TestCase {
 
         prop.setProperty("freshTime","9999999");
 
-        prop.setProperty("fileBase","C:\\Users\\ytseitkin");
+        prop.setProperty("fileRoot",fileRoot);
 
         server = new HTTPServer(prop);
 
@@ -40,7 +42,7 @@ public class AcceptanceTest extends TestCase {
         serverThread = new Thread(runnable);
         serverThread.start();
 
-        file = new File("C:\\Users\\ytseitkin\\web\\interface\\text#html\\en\\test");
+        file = new File(fileRoot + "\\web\\interface\\text#html\\en\\test");
 
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))){
             writer.write("<html>This is the test file</html>");
@@ -115,7 +117,7 @@ public class AcceptanceTest extends TestCase {
 
         checkIfResponse(socket,"201");
 
-        File createdFile = new File("C:\\Users\\ytseitkin\\web\\interface\\text#html\\en\\test1");
+        File createdFile = new File(fileRoot + "\\web\\interface\\text#html\\en\\test1");
 
         StringBuilder fileContent = new StringBuilder();
 
@@ -137,7 +139,7 @@ public class AcceptanceTest extends TestCase {
 
     public void testDelete() throws Exception {
 
-        file = new File("C:\\Users\\ytseitkin\\web\\interface\\text#html\\en\\testDelete");
+        file = new File(fileRoot + "\\web\\interface\\text#html\\en\\testDelete");
 
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))){
             writer.write("<html>This is the DeleteFile</html>");
@@ -239,7 +241,7 @@ public class AcceptanceTest extends TestCase {
 
         checkIfResponse(socket,"201");
 
-        File createdFile = new File("C:\\Users\\ytseitkin\\web\\interface\\text#html\\en\\postTest");
+        File createdFile = new File(fileRoot + "\\web\\interface\\text#html\\en\\postTest");
 
         assertTrue(createdFile.delete());
 

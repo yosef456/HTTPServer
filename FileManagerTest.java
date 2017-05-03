@@ -11,22 +11,27 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public class FileManagerTest extends TestCase {
 
-    private String fileBase = "C:\\Users\\ytseitkin";
+    private String fileRoot = "C:\\Users\\ytseitkin";
 
-    private FileManager fileManager = new FileManager(5, 999999,fileBase );
+    private FileManager fileManager = new FileManager(5, 999999,fileRoot );
 
     private HTTPRequest httpRequest = new HTTPRequest(1);
 
     public void testGetLockForFile() throws Exception {
 
-        ReentrantReadWriteLock lock = fileManager.getLockForFile(fileBase + "\\web" );
+        ReentrantReadWriteLock lock = fileManager.getLockForFile(fileRoot + "\\web" );
 
         assertNotNull(lock);
     }
 
     public void testGet() throws Exception {
 
-        File file = new File(fileBase + "/web/interface/text#html/en/test");
+        File dir = new File(fileRoot + "/web/interface/text#html/en");
+
+        if(!dir.isDirectory())
+            dir.mkdirs();
+
+        File file = new File(fileRoot + "/web/interface/text#html/en/test");
 
         if(!file.exists()){
             try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file))){
@@ -34,13 +39,10 @@ public class FileManagerTest extends TestCase {
             }
         }
 
-        String request = "GET /web/interface/index HTTP/1.1\r\n" +
+        String request = "GET /web/interface/test HTTP/1.1\r\n" +
                 "Host: localhost:8080\r\n" +
-                "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8\r\n" +
-                "Accept-Language: en-US,en;q=0.5\r\n" +
-                "Accept-Encoding: gzip, deflate\r\n" +
-                "Connection: keep-alive\r\n" +
-                "Upgrade-Insecure-Requests: 1\r\n" +
+                "Accept: text/html\r\n" +
+                "Accept-Language: en\r\n" +
                 "\r\n";
 
         assertTrue(httpRequest.parseRequest(request.getBytes()));
@@ -48,7 +50,7 @@ public class FileManagerTest extends TestCase {
         FileManagerResponse fileManagerResponse = fileManager.get(httpRequest);
         assertEquals(fileManagerResponse.getFormat(),"text/html");
 
-        if(new File(fileBase + "/web/interface/text#html/en/index").exists())
+        if(new File(fileRoot + "/web/interface/text#html/en/index").exists())
             assertEquals(fileManagerResponse.getStat(),FileManagerResponse.fileStatus.SUCCESS);
         else
             assertEquals(fileManagerResponse.getStat(),FileManagerResponse.fileStatus.NOT_FOUND);
@@ -57,12 +59,12 @@ public class FileManagerTest extends TestCase {
 
     public void testPost() throws Exception {
 
-        File dir = new File(fileBase + "/web/interface/text#txt/en");
+        File dir = new File(fileRoot + "/web/interface/text#txt/en");
 
         if(!dir.isDirectory())
             dir.mkdirs();
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         if(file.exists())
             file.delete();
@@ -113,7 +115,7 @@ public class FileManagerTest extends TestCase {
 
         assertTrue(httpRequest.parseRequest(request.getBytes()));
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         if(file.exists())
             assertTrue(file.delete());
@@ -130,7 +132,7 @@ public class FileManagerTest extends TestCase {
 
         assertEquals(content,"This is the creation");
 
-        file.delete();
+        assertTrue(file.delete());
 
     }
 
@@ -141,12 +143,12 @@ public class FileManagerTest extends TestCase {
 
         assertTrue(httpRequest.parseRequest(request.getBytes()));
 
-        File dir = new File(fileBase + "/web/interface/text#txt/en");
+        File dir = new File(fileRoot + "/web/interface/text#txt/en");
 
         if(!dir.isDirectory())
             dir.mkdirs();
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         if(!file.exists()){
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -163,12 +165,12 @@ public class FileManagerTest extends TestCase {
 
     public void testReadFromFile() throws Exception {
 
-        File dir = new File(fileBase + "/web/interface/text#txt/en");
+        File dir = new File(fileRoot + "/web/interface/text#txt/en");
 
         if(!dir.isDirectory())
             dir.mkdirs();
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
         bufferedWriter.write("Just Random Stuff");
@@ -179,17 +181,17 @@ public class FileManagerTest extends TestCase {
 
         assertEquals(new String(content),"Just Random Stuff");
 
-        file.delete();
+        assertTrue(file.delete());
     }
 
     public void testFindAllFiles() throws Exception {
 
-        File dir = new File(fileBase + "/web/interface/text#txt/en");
+        File dir = new File(fileRoot + "/web/interface/text#txt/en");
 
         if(!dir.isDirectory())
             dir.mkdirs();
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         if(!file.exists()){
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -206,12 +208,12 @@ public class FileManagerTest extends TestCase {
 
     public void testFindPerfectFileVersion() throws Exception {
 
-        File dir = new File(fileBase + "/web/interface/text#txt/en");
+        File dir = new File(fileRoot + "/web/interface/text#txt/en");
 
         if(!dir.isDirectory())
             dir.mkdirs();
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         if(!file.exists()){
             BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -219,9 +221,9 @@ public class FileManagerTest extends TestCase {
             bufferedWriter.close();
         }
 
-        dir =  new File(fileBase + "/web/interface");
+        dir =  new File(fileRoot + "/web/interface");
 
-        String request = "GET /web/interface/index HTTP/1.1\r\n" +
+        String request = "GET /web/interface/test HTTP/1.1\r\n" +
                 "Host: localhost:8080\r\n" +
                 "Accept: text/txt\r\n" +
                 "Accept-Language: en\r\n" +
@@ -236,12 +238,12 @@ public class FileManagerTest extends TestCase {
 
         assertEquals(perfectFileVersion.getAbsoluteFile(),file.getAbsoluteFile());
 
-        file.delete();
+        assertTrue(file.delete());
     }
 
     public void testCreateTempFile() throws Exception {
 
-        File file = new File(fileBase + "/web/interface/text#txt/en/test");
+        File file = new File(fileRoot + "/web/interface/text#txt/en/test");
 
         File temp = fileManager.createTempFile(file,RequestVerb.POST,1);
 

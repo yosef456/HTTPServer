@@ -21,7 +21,7 @@ public class HTTPServer {
 
     private ExecutorService executor;
 
-    private String fileBase;
+    private String fileRoot;
 
     private int requestID;
 
@@ -31,10 +31,10 @@ public class HTTPServer {
 
         prop = new Properties();
 
-        if(!readFromPropFile(propertiesFile) || !prop.containsKey("fileBase")){
+        if(!readFromPropFile(propertiesFile) || !prop.containsKey("fileRoot")){
             System.out.println("An error has occurred while reading from properties file, please make sure the path is correct" +
                     "and that all the properties are correct and included. Please make sure to include:\n" +
-                    "fileBase (location of the web directory)\n" +
+                    "fileRoot (location of the web directory)\n" +
                     "cacheSlots (number of slots in the cache)\n" +
                     "freshTime (Amount in milliseconds of freshness of the cache copy)\n" +
                     "number_of_threads (number of threads in thread pool)\n" +
@@ -44,9 +44,9 @@ public class HTTPServer {
 
         setDefaultPropValues();
 
-        fileBase = prop.getProperty("fileBase");
+        fileRoot = prop.getProperty("fileRoot");
 
-        fileManager = new FileManager(Integer.parseInt(prop.getProperty("cacheSlots")), Long.parseLong(prop.getProperty("freshTime")),fileBase);
+        fileManager = new FileManager(Integer.parseInt(prop.getProperty("cacheSlots")), Long.parseLong(prop.getProperty("freshTime")),fileRoot);
 
         rollBackNotCompletedRequests();
 
@@ -59,20 +59,20 @@ public class HTTPServer {
 
         String slash = "\\";
 
-        if(fileBase.contains("/"))
+        if(fileRoot.contains("/"))
             slash = "/";
 
-        if(!(new File(fileBase  + slash + "temp")).isDirectory())
-            (new File(fileBase  + slash + "temp")).mkdirs();
+        if(!(new File(fileRoot  + slash + "temp")).isDirectory())
+            (new File(fileRoot  + slash + "temp")).mkdirs();
 
     }
 
     public HTTPServer(Properties propertiesFile){
         prop = propertiesFile;
 
-        fileBase = prop.getProperty("fileBase");
+        fileRoot = prop.getProperty("fileRoot");
 
-        fileManager = new FileManager(Integer.parseInt(prop.getProperty("cacheSlots")), Long.parseLong(prop.getProperty("freshTime")),fileBase);
+        fileManager = new FileManager(Integer.parseInt(prop.getProperty("cacheSlots")), Long.parseLong(prop.getProperty("freshTime")),fileRoot);
         try{
             serverSocket = new ServerSocket(Integer.parseInt(prop.getProperty("port")));
             executor = Executors.newFixedThreadPool(Integer.parseInt(prop.getProperty("number_of_threads")));
@@ -86,10 +86,10 @@ public class HTTPServer {
 
         String slash = "\\";
 
-        if(fileBase.contains("/"))
+        if(fileRoot.contains("/"))
             slash = "/";
 
-        File tempDir = new File(fileBase + slash + "temp");
+        File tempDir = new File(fileRoot + slash + "temp");
 
         //There are no files to return
         if(!tempDir.isDirectory())
@@ -159,6 +159,8 @@ public class HTTPServer {
                         RandomAccessFile postedFile = new RandomAccessFile(target,"rwd");
 
                         postedFile.setLength(bytes);
+
+                        postedFile.close();
                 }
 
             } catch (IOException e) {
@@ -228,13 +230,13 @@ public class HTTPServer {
 
             }
         } catch (IOException e){
-            e.printStackTrace();
+            System.out.println("An error occurred, shutting down the server");
         } finally {
             try {
                 if(serverSocket!=null)
                     serverSocket.close();
             } catch (IOException e) {
-                e.printStackTrace();
+                System.out.println("Could not close server socket");
             }
         }
 

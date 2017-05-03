@@ -13,13 +13,13 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class FileManager {
 
     private Cache cache;
-    private String fileBase;
+    private String fileRoot;
     private ConcurrentHashMap<String,ReentrantReadWriteLock> locks;
 
-    public FileManager(int slots, long freshTime, String fileBase){
+    public FileManager(int slots, long freshTime, String fileRoot){
 
         cache = new Cache(slots, freshTime);
-        this.fileBase = fileBase;
+        this.fileRoot = fileRoot;
         locks = new ConcurrentHashMap<>();
 
     }
@@ -43,7 +43,7 @@ public class FileManager {
         if(fileName.trim().equals(""))
             fileName = "index";
 
-        String dirUrl = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
+        String dirUrl = fileRoot + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
         File dir = new File(dirUrl);
 
@@ -54,7 +54,7 @@ public class FileManager {
             slash = "\\";
 
         //He is trying to escape the root folder for the web, in which case he should be able to access anything
-        if(!dir.isDirectory() || !dir.getAbsolutePath().startsWith(fileBase + slash + "web")){
+        if(!dir.isDirectory() || !dir.getAbsolutePath().startsWith(fileRoot + slash + "web")){
             return (new FileManagerResponse(FileManagerResponse.fileStatus.NOT_FOUND));
         }
 
@@ -164,10 +164,10 @@ public class FileManager {
         else
             fileName = request.getUrl().substring(request.getUrl().lastIndexOf('/')+1);
 
-        String path = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
+        String path = fileRoot + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
         //Can't go outside of the designated dir or he is trying
-        if(!path.startsWith(fileBase + "/" + "web") || !(new File(path).isDirectory()))
+        if(!path.startsWith(fileRoot + "/" + "web") || !(new File(path).isDirectory()))
             return (new FileManagerResponse(FileManagerResponse.fileStatus.NOT_FOUND));
 
         path += "/" + request.getHeader("Content-Type").get(0).getValue().replace("/","#") + "/"
@@ -257,10 +257,10 @@ public class FileManager {
         if(fileName.trim().equals(""))
             fileName = "index";
 
-        String url = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
+        String url = fileRoot + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
         //Can't go outside of the designated dir or he is trying
-        if(!(new File(url)).isDirectory() && !url.startsWith(fileBase + "/" + "web")){
+        if(!(new File(url)).isDirectory() || !url.startsWith(fileRoot + "/" + "web")){
             return (new FileManagerResponse(FileManagerResponse.fileStatus.NOT_FOUND));
         }
 
@@ -360,7 +360,7 @@ public class FileManager {
         if(fileName.contains("."))
             fileName = fileName.substring(0,  fileName.lastIndexOf('.'));
 
-        findAllFiles(fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf("/")),fileName,allFiles);
+        findAllFiles(fileRoot + request.getUrl().substring(0,request.getUrl().lastIndexOf("/")),fileName,allFiles);
 
         //There is no file return a 404
         if( allFiles.size()==0){
@@ -548,7 +548,7 @@ public class FileManager {
         if (!file.getAbsolutePath().contains(slash))
             slash = "\\";
 
-        File temp = new File(fileBase + slash +  "temp" + slash + Integer.toString(ID));
+        File temp = new File(fileRoot + slash +  "temp" + slash + Integer.toString(ID));
 
         try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(temp));
                 RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw")){

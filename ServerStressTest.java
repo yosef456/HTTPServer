@@ -36,13 +36,14 @@ public class ServerStressTest {
                 OutputStream out= socket.getOutputStream();
                 out.write(request.getBytes());
             } catch(IOException e){
-                e.printStackTrace();
+               System.out.println("The server is not up. Please Start the server first");
+               System.exit(1);
             }
 
         }
 
         try {
-            Thread.sleep(2000);
+            Thread.sleep(5000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
