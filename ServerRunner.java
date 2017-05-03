@@ -1,8 +1,5 @@
 package HTTPServer;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.util.Properties;
 
 /**
@@ -18,22 +15,22 @@ public class ServerRunner {
 
         prop.setProperty("port","8080");
 
-        prop.setProperty("number_of_threads","100");
+        prop.setProperty("number_of_threads","10");
 
         prop.setProperty("freshTime","9999999");
 
         prop.setProperty("fileBase","C:\\Users\\ytseitkin");
 
-        try {
-            OutputStream outputStream = new FileOutputStream(new File("C:\\Users\\ytseitkin\\Desktop\\text.txt"));
-            prop.store(outputStream,"this is my prop files");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+//        try {
+//            OutputStream outputStream = new FileOutputStream(new File("C:\\Users\\ytseitkin\\Desktop\\text.txt"));
+//            prop.store(outputStream,"this is my prop files");
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
 
 
 
-        HTTPServer server = new HTTPServer("C:\\Users\\ytseitkin\\Desktop\\text.txt");
+        HTTPServer server = new HTTPServer(prop);
 
         server.listen();
     }

@@ -19,30 +19,30 @@ public class HTTPRequest {
         headers = new HashMap<>();
     }
 
-
-    public static boolean checkIfFormatted(String request){
-
-        String [] lines = request.split("\r\n");
-
-        if(lines.length<2)
-            return false;
-
-        if(!lines[0].matches(HTTPRequestRegex.requestLine))
-            return false;
-
-        String headerValue = "(" + HTTPRequestRegex.token + "+|\\*{1})" + "+" + "(;" + HTTPRequestRegex.token
-                + "+=(([1]|[0]|0\\.[0-9])|" + HTTPRequestRegex.token + "+){1})?";
-
-
-        String values = headerValue + "(," + headerValue +  ")*";
-
-        for(int i=2; !lines[i].equals(""); i++){
-            if (!lines[i].startsWith("User-Agent:") && !lines[i].matches(HTTPRequestRegex.fieldName + ": "+ values))
-                return false;
-        }
-
-        return true;
-    }
+//
+//    public static boolean checkIfFormatted(String request){
+//
+//        String [] lines = request.split("\r\n");
+//
+//        if(lines.length<2)
+//            return false;
+//
+//        if(!lines[0].matches(HTTPRequestRegex.requestLine))
+//            return false;
+//
+//        String headerValue = "(" + HTTPRequestRegex.token + "+|\\*{1})" + "+" + "(;" + HTTPRequestRegex.token
+//                + "+=(([1]|[0]|0\\.[0-9])|" + HTTPRequestRegex.token + "+){1})?";
+//
+//
+//        String values = headerValue + "(," + headerValue +  ")*";
+//
+//        for(int i=2; !lines[i].equals(""); i++){
+//            if (!lines[i].startsWith("User-Agent:") && !lines[i].matches(HTTPRequestRegex.fieldName + ": "+ values))
+//                return false;
+//        }
+//
+//        return true;
+//    }
     public boolean parseRequest(byte[] request){
 
         int indexOfMessage = 0;
@@ -106,16 +106,42 @@ public class HTTPRequest {
 
                 String []args = header[1].split(",");
 
+                //check if the number of , matches with the number of args
+                if(args.length-1 != (header[1].length() - header[1].replace(",", "").length())){
+                    messageBody = null;
+                    return false;
+                }
+
                 ArrayList <HeaderValue> argsList = new ArrayList<>();
 
                 for(String arg: args){
 
+                    arg = arg.trim();
+
+                    //Check if it has errors
+                    if(arg.equals("") || (arg.contains(";") && !arg.split(";",2)[1].contains("=")) ||
+                            (!arg.contains(";") && arg.trim().contains(" "))||
+                             (arg.contains(";") && arg.split(";",2)[0].trim().contains(" "))){
+                        messageBody = null;
+                        return false;
+                    }
 
                     if (arg.contains(";") && arg.split(";",2)[1].contains("=") && arg.split(";")[1].split("=")[0].trim().equals("q") ){
+
+                        if((arg.split(";")[1].split("=")[1].trim().equals(""))){
+                            messageBody = null;
+                            return false;
+                        }
 
                         argsList.add(new HeaderValue(arg.split(";")[0].trim(),Double.parseDouble(arg.split(";")[1].split("=")[1].trim())));
 
                     } else if(arg.contains(";") && arg.split(";",2)[1].contains("=")) {
+
+                        if((arg.split(";")[1].split("=")[1].trim().equals(""))){
+                            messageBody = null;
+                            return false;
+                        }
+
                         argsList.add(new HeaderValue(arg.split(";")[0].trim(),arg.split(";")[1].split("=")[1].trim()));
 
                     } else {
@@ -129,6 +155,7 @@ public class HTTPRequest {
             }
 
         } catch (Exception e){
+            messageBody = null;
             return false;
         }
 

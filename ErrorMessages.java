@@ -95,7 +95,7 @@ public class ErrorMessages {
                     "<body>\n" +
                     "<h1>500</h1>\n" +
                     "<h2>Internal server error.\n " +
-                    "Please resend request in a few minutes.</h2>\n" +
+                    "Please resend the request in a few minutes.</h2>\n" +
                     "</body>\n" +
                     "</html>";
 

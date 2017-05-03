@@ -40,6 +40,9 @@ public class FileManager {
 
         String fileName = request.getUrl().substring(request.getUrl().lastIndexOf('/')+1);
 
+        if(fileName.trim().equals(""))
+            fileName = "index";
+
         String dirUrl = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
         File dir = new File(dirUrl);
@@ -111,8 +114,11 @@ public class FileManager {
         } else {
 
             //File was deleted in the time we were trying to lock it
-            if(!foundFile.exists())
+            if(!foundFile.exists()){
+                lock.readLock().unlock();
                 return (new FileManagerResponse(FileManagerResponse.fileStatus.NOT_FOUND));
+            }
+
 
             System.out.println("No cache");
 
@@ -152,7 +158,11 @@ public class FileManager {
         if(types.size()==0)
             return (new FileManagerResponse(FileManagerResponse.fileStatus.CONFLICT));
 
-        String fileName = request.getUrl().substring(request.getUrl().lastIndexOf('/')+1);
+        String fileName;
+        if(request.getUrl().substring(request.getUrl().lastIndexOf('/')+1).trim().equals(""))
+            fileName = "index";
+        else
+            fileName = request.getUrl().substring(request.getUrl().lastIndexOf('/')+1);
 
         String path = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
@@ -165,7 +175,7 @@ public class FileManager {
 
         File dir = new File(path);
 
-        //If we don't have the format/language formats created
+        //If we don't have the format/language folders created
         if(!dir.isDirectory())
             dir.mkdirs();
 
@@ -176,7 +186,9 @@ public class FileManager {
             slash = "\\";
 
         //Find the file he is talking about
-        File[] files = dir.listFiles((dirPath, name) -> name.startsWith(fileName));
+        File[] files = dir.listFiles((dirPath, name) -> (name.contains(".") ? name.substring(0,name.lastIndexOf(".")).equals(fileName) :
+            name.equals(fileName)));
+
         File file;
 
         //Check if the file exists yet, if yes send back a 200 else send back a 201
@@ -203,7 +215,7 @@ public class FileManager {
             }
         }
 
-        //TODO lock file
+        //lock file
         ReentrantReadWriteLock lock = getLockForFile(file.getAbsolutePath());
         boolean locked;
 
@@ -216,15 +228,17 @@ public class FileManager {
         if(!locked)
             return new FileManagerResponse(FileManagerResponse.fileStatus.SERVICE_UNAVAILABLE);
 
-        try (OutputStream outputStream = new FileOutputStream(file,true)){
-            outputStream.write(contentMessage);
+
+        try (OutputStream output = new FileOutputStream(file,true)){
+            output.write(contentMessage);
             cache.delete(file.getAbsolutePath());
         } catch (IOException e){
-            lock.writeLock().unlock();
             return (new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR));
+        } finally {
+            lock.writeLock().unlock();
         }
 
-        lock.writeLock().unlock();
+        cache.delete(file.getAbsolutePath());
 
         temp.delete();
 
@@ -240,9 +254,13 @@ public class FileManager {
 
         String fileName = request.getUrl().substring(request.getUrl().lastIndexOf('/')+1);
 
+        if(fileName.trim().equals(""))
+            fileName = "index";
+
         String url = fileBase + request.getUrl().substring(0,request.getUrl().lastIndexOf('/'));
 
-        if(!(new File(url)).isDirectory()){
+        //Can't go outside of the designated dir or he is trying
+        if(!(new File(url)).isDirectory() && !url.startsWith(fileBase + "/" + "web")){
             return (new FileManagerResponse(FileManagerResponse.fileStatus.NOT_FOUND));
         }
 
@@ -310,6 +328,8 @@ public class FileManager {
             else
                 output.write(request.getMessageBody());
 
+            cache.delete(file.getAbsolutePath());
+
             if(!existed)
                 fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.CREATED);
             else
@@ -317,9 +337,9 @@ public class FileManager {
 
         } catch (IOException e) {
             fileManagerResponse = new FileManagerResponse(FileManagerResponse.fileStatus.CONFLICT);
+        } finally {
+            lock.writeLock().unlock();
         }
-
-        lock.writeLock().unlock();
 
         temp.delete();
 
@@ -331,6 +351,9 @@ public class FileManager {
 
         //find all the versions of the file and delete them
         String fileName = request.getUrl().substring(request.getUrl().lastIndexOf("/")+1);
+
+        if(fileName.trim().equals(""))
+            fileName = "index";
 
         ArrayList<File> allFiles = new ArrayList<>();
 
@@ -356,15 +379,16 @@ public class FileManager {
                 return new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR);
             }
 
-            File temp = createTempFile(file,RequestVerb.DELETE,request.getID());
-
             if(!locked)
                 return new FileManagerResponse(FileManagerResponse.fileStatus.SERVICE_UNAVAILABLE);
+
+            File temp = createTempFile(file,RequestVerb.DELETE,request.getID());
 
             cache.delete(file.getAbsolutePath());
 
             if(!file.delete()){
                 //Something went wrong while deleting
+                lock.writeLock().unlock();
                 return new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR);
             }
             locks.remove(file.getAbsolutePath());
@@ -526,14 +550,13 @@ public class FileManager {
 
         File temp = new File(fileBase + slash +  "temp" + slash + Integer.toString(ID));
 
-        try{
-            temp.createNewFile();
-
-            BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(temp));
+        try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(temp));
+                RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw")){
 
             switch ((verb)){
                 case POST:
-                    bufferedWriter.write("POST\n" + file.getAbsolutePath() + "\n" + (new RandomAccessFile(file,"rw")).length());
+
+                    bufferedWriter.write("POST\n" + file.getAbsolutePath() + "\n" + randomAccessFile.length());
                     break;
 
                 case PUT:
@@ -544,9 +567,6 @@ public class FileManager {
                     bufferedWriter.write("DELETE\n" + file.getAbsolutePath());
                     break;
             }
-
-            bufferedWriter.flush();
-            bufferedWriter.close();
 
         }catch (IOException e){
             return null;

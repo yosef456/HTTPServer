@@ -13,9 +13,9 @@ import java.util.ArrayList;
 public class RequestThread implements Runnable {
 
     private Socket socket;
-    private HTTPRequest httpRequest;
+    protected HTTPRequest httpRequest;
     private FileManager fileManager;
-    private HTTPResponse httpResponse;
+    protected HTTPResponse httpResponse;
 
     public RequestThread(Socket socket, FileManager fileManager,int ID){
         httpRequest = new HTTPRequest(ID);
@@ -26,7 +26,6 @@ public class RequestThread implements Runnable {
 
     protected boolean parseRequest(){
 
-        //StringBuilder request = new StringBuilder();
         ArrayList<Byte> request = new ArrayList<>();
 
         try{
@@ -62,7 +61,6 @@ public class RequestThread implements Runnable {
         if(!httpRequest.parseRequest(arr)){
             return false;
         }
-
 
         return true;
     }
@@ -202,7 +200,7 @@ public class RequestThread implements Runnable {
                 httpResponse.addHeader("Content-Type","text/html");
                 httpResponse.addHeader("Content-Language","en");
             }else{
-                httpResponse = new HTTPResponse(406);
+                httpResponse = new HTTPResponse(405);
                 httpResponse.addMessage(ErrorMessages.METHOD_NOT_ALLOWED.getBytes());
                 httpResponse.addHeader("Content-Type","text/html");
                 httpResponse.addHeader("Content-Language","en");

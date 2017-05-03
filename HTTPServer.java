@@ -193,7 +193,7 @@ public class HTTPServer {
 
     }
 
-    protected boolean isInt(String num){
+    protected static boolean isInt(String num){
 
         try{
             Integer.parseInt(num);
@@ -231,7 +231,8 @@ public class HTTPServer {
             e.printStackTrace();
         } finally {
             try {
-                serverSocket.close();
+                if(serverSocket!=null)
+                    serverSocket.close();
             } catch (IOException e) {
                 e.printStackTrace();
             }
