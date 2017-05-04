@@ -1,19 +1,22 @@
 package HTTPServer;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Properties;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 /**
  * Created by ytseitkin on 5/2/2017.
  */
-public class HTTPServerTest extends TestCase {
+public class HTTPServerTest {
 
     private String fileRoot = "C:\\Users\\ytseitkin";
 
+    @Test
     public void testIsInt() throws Exception {
 
         assertTrue(HTTPServer.isInt("5"));
@@ -25,6 +28,7 @@ public class HTTPServerTest extends TestCase {
         assertFalse(HTTPServer.isInt("6yhfg4"));
     }
 
+    @Test
     public void testListen() throws Exception {
 
         Properties prop = new Properties();
@@ -47,6 +51,8 @@ public class HTTPServerTest extends TestCase {
         Thread serverThread = new Thread(runnable);
         serverThread.start();
 
+        Thread.sleep(3000);
+
         Socket socket = new Socket("localhost",8080);
 
         OutputStream outputStream = socket.getOutputStream();
@@ -62,17 +68,15 @@ public class HTTPServerTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(100);
+        Thread.sleep(500);
 
-        InputStream inputStream = socket.getInputStream();
-
-        //The server responded
-        assertTrue(inputStream.available()>0);
-
+        //Meaning we got the something otherwise the socket wouldn't have connected
         socket.close();
 
         //Kill the server
-        serverThread.interrupt();
+        serverThread.stop();
+
+        Thread.sleep(3000);
 
     }
 

@@ -53,8 +53,8 @@ public class HTTPServer {
         try{
             serverSocket = new ServerSocket(Integer.parseInt(prop.getProperty("port")));
             executor = Executors.newFixedThreadPool(Integer.parseInt(prop.getProperty("number_of_threads")));
-        } catch(IOException e){
-            e.printStackTrace();
+        } catch(Exception e){
+            System.out.println("An error has occurred, shutting down server");
         }
 
         String slash = "\\";
@@ -90,7 +90,7 @@ public class HTTPServer {
             serverSocket = new ServerSocket(Integer.parseInt(prop.getProperty("port")));
             executor = Executors.newFixedThreadPool(Integer.parseInt(prop.getProperty("number_of_threads")));
         } catch(IOException e){
-            e.printStackTrace();
+            System.out.println("An error has occurred, shutting down server");
         }
 
         rollBackNotCompletedRequests();
@@ -243,7 +243,7 @@ public class HTTPServer {
                 newRequest(client);
 
             }
-        } catch (IOException e){
+        } catch (Exception e){
             System.out.println("An error occurred, shutting down the server");
         } finally {
             try {

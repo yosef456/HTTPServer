@@ -1,12 +1,15 @@
 package HTTPServer;
 
-import junit.framework.TestCase;
+import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * Created by ytseitkin on 5/2/2017.
  */
-public class HTTPRequestTest extends TestCase {
+public class HTTPRequestTest {
 
+    @Test
     public void testParseRequest() throws Exception {
 
         String request = "GET /web/interface/index HTTP/1.1\r\n" +
@@ -62,6 +65,7 @@ public class HTTPRequestTest extends TestCase {
         assertFalse(httpRequest.parseRequest(request.getBytes()));
     }
 
+    @Test
     public void testContainsHeader() throws Exception {
 
         HTTPRequest httpRequest = new HTTPRequest(1);

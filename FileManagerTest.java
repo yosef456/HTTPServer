@@ -1,15 +1,17 @@
 package HTTPServer;
 
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by ytseitkin on 5/1/2017.
  */
-public class FileManagerTest extends TestCase {
+public class FileManagerTest {
 
     private String fileRoot = "C:\\Users\\ytseitkin";
 
@@ -17,6 +19,7 @@ public class FileManagerTest extends TestCase {
 
     private HTTPRequest httpRequest = new HTTPRequest(1);
 
+    @Test
     public void testGetLockForFile() throws Exception {
 
         ReentrantReadWriteLock lock = fileManager.getLockForFile(fileRoot + "\\web" );
@@ -24,6 +27,7 @@ public class FileManagerTest extends TestCase {
         assertNotNull(lock);
     }
 
+    @Test
     public void testGet() throws Exception {
 
         File dir = new File(fileRoot + "/web/interface/text#html/en");
@@ -57,6 +61,7 @@ public class FileManagerTest extends TestCase {
 
     }
 
+    @Test
     public void testPost() throws Exception {
 
         File dir = new File(fileRoot + "/web/interface/text#txt/en");
@@ -104,6 +109,7 @@ public class FileManagerTest extends TestCase {
         assertTrue(file.delete());
     }
 
+    @Test
     public void testPut() throws Exception {
 
         String request = "PUT /web/interface/test HTTP/1.1\r\n" +
@@ -136,6 +142,7 @@ public class FileManagerTest extends TestCase {
 
     }
 
+    @Test
     public void testDelete() throws Exception {
         String request = "DELETE /web/interface/test HTTP/1.1\r\n" +
                 "Host: localhost:8080\r\n" +
@@ -163,6 +170,7 @@ public class FileManagerTest extends TestCase {
         assertFalse(file.exists());
     }
 
+    @Test
     public void testReadFromFile() throws Exception {
 
         File dir = new File(fileRoot + "/web/interface/text#txt/en");
@@ -184,6 +192,7 @@ public class FileManagerTest extends TestCase {
         assertTrue(file.delete());
     }
 
+    @Test
     public void testFindAllFiles() throws Exception {
 
         File dir = new File(fileRoot + "/web/interface/text#txt/en");
@@ -206,6 +215,7 @@ public class FileManagerTest extends TestCase {
         assertEquals(files.get(0).getAbsoluteFile(),file.getAbsoluteFile());
     }
 
+    @Test
     public void testFindPerfectFileVersion() throws Exception {
 
         File dir = new File(fileRoot + "/web/interface/text#txt/en");
@@ -241,6 +251,7 @@ public class FileManagerTest extends TestCase {
         assertTrue(file.delete());
     }
 
+    @Test
     public void testCreateTempFile() throws Exception {
 
         File file = new File(fileRoot + "/web/interface/text#txt/en/test");

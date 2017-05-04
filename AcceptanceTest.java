@@ -1,30 +1,28 @@
 package HTTPServer;
 
-import junit.framework.TestCase;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Test;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.Properties;
 
+import static org.junit.Assert.*;
+
 /**
  * Created by ytseitkin on 5/2/2017.
  */
-public class AcceptanceTest extends TestCase {
+public class AcceptanceTest {
 
-    HTTPServer server;
+    private static Thread serverThread;
 
-    Properties prop;
+    private static final String fileRoot = "C:\\Users\\ytseitkin";
 
-    Thread serverThread;
+    @BeforeClass
+    public static void setUpBeforeClass() throws Exception {
 
-    File file;
-
-    private String fileRoot = "C:\\Users\\ytseitkin";
-
-    public void setUp() throws Exception {
-        super.setUp();
-
-        prop = new Properties();
+        Properties prop = new Properties();
 
         prop.setProperty("cacheSlots","5");
 
@@ -36,25 +34,31 @@ public class AcceptanceTest extends TestCase {
 
         prop.setProperty("fileRoot",fileRoot);
 
-        server = new HTTPServer(prop);
+        HTTPServer server = new HTTPServer(prop);
 
         Runnable runnable = () -> server.listen();
+
+
         serverThread = new Thread(runnable);
         serverThread.start();
 
-        file = new File(fileRoot + "\\web\\interface\\text#html\\en\\test");
+        Thread.sleep(3000);
+
+        File file = new File(fileRoot + "\\web\\interface\\text#html\\en\\test");
 
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))){
             writer.write("<html>This is the test file</html>");
         }
     }
 
-    public void tearDown() throws Exception {
-        super.tearDown();
-
-        serverThread.interrupt();
+    @AfterClass
+    public static void tearDownAfterClass() throws Exception {
+        //Just for testing
+        serverThread.stop();
+        Thread.sleep(3000);
     }
 
+    @Test
     public void testGet() throws Exception {
 
         String request = "GET /web/interface/test HTTP/1.1\r\n" +
@@ -69,13 +73,14 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"200");
 
         socket.close();
     }
 
+    @Test
     public void testPost() throws Exception {
 
         String request = "POST /web/interface/test HTTP/1.1\r\n" +
@@ -91,14 +96,20 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"200");
 
         socket.close();
     }
 
+    @Test
     public void testPut() throws Exception {
+
+        File createdFile = new File(fileRoot + "\\web\\interface\\text#html\\en\\test1");
+
+        if(createdFile.exists())
+            assertTrue(createdFile.delete());
 
         String request = "PUT /web/interface/test1 HTTP/1.1\r\n" +
                 "Host: localhost:8080\r\n" +
@@ -113,11 +124,9 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"201");
-
-        File createdFile = new File(fileRoot + "\\web\\interface\\text#html\\en\\test1");
 
         StringBuilder fileContent = new StringBuilder();
 
@@ -137,9 +146,10 @@ public class AcceptanceTest extends TestCase {
 
     }
 
+    @Test
     public void testDelete() throws Exception {
 
-        file = new File(fileRoot + "\\web\\interface\\text#html\\en\\testDelete");
+        File file = new File(fileRoot + "\\web\\interface\\text#html\\en\\testDelete");
 
         try(BufferedWriter writer = new BufferedWriter(new FileWriter(file))){
             writer.write("<html>This is the DeleteFile</html>");
@@ -154,7 +164,7 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"200");
 
@@ -163,6 +173,7 @@ public class AcceptanceTest extends TestCase {
         socket.close();
     }
 
+    @Test
     public void testConnect() throws Exception {
 
         String request = "CONNECT /web/interface/testDelete HTTP/1.1\r\n" +
@@ -174,13 +185,14 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"405");
 
         socket.close();
     }
 
+    @Test
     public void testGetNotFound() throws Exception {
 
         String request = "GET /web/interface/blahblahblah HTTP/1.1\r\n" +
@@ -195,13 +207,14 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"404");
 
         socket.close();
     }
 
+    @Test
     public void testPutExistsAlready() throws Exception {
 
         String request = "PUT /web/interface/test HTTP/1.1\r\n" +
@@ -217,11 +230,12 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"200");
     }
 
+    @Test
     public void testPostDoesntExistAlready() throws Exception {
 
         String request = "POST /web/interface/postTest HTTP/1.1\r\n" +
@@ -237,7 +251,7 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"201");
 
@@ -248,6 +262,7 @@ public class AcceptanceTest extends TestCase {
         socket.close();
     }
 
+    @Test
     public void testDeleteDoesntExist() throws Exception {
 
         String request = "DELETE /web/sdmnvdfkj HTTP/1.1\r\n" +
@@ -259,12 +274,13 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"404");
 
     }
 
+    @Test
     public void testInvalidRequestLine() throws Exception {
 
         String request = "GET sdvs blahb blah HTTP/1.1\r\n" +
@@ -279,11 +295,12 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"400");
     }
 
+    @Test
     public void testInvalidHeader() throws Exception {
 
         String request = "GET /web/interface/test HTTP/1.1\r\n" +
@@ -298,13 +315,16 @@ public class AcceptanceTest extends TestCase {
 
         outputStream.write(request.getBytes());
 
-        Thread.sleep(50);
+        Thread.sleep(500);
 
         checkIfResponse(socket,"400");
     }
 
     public void checkIfResponse(Socket socket, String response ) throws Exception{
         try(BufferedReader read = new BufferedReader (new InputStreamReader (socket.getInputStream()))){
+
+            assertTrue(socket.getInputStream().available()>0);
+
             String[] responseLine = read.readLine().split(" ");
 
             assertTrue(responseLine.length>=3);
