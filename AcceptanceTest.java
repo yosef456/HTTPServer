@@ -50,7 +50,7 @@ public class AcceptanceTest extends TestCase {
     }
 
     public void tearDown() throws Exception {
-        //super.tearDown();
+        super.tearDown();
 
         serverThread.interrupt();
     }

@@ -319,6 +319,9 @@ public class FileManager {
 
         File temp = createTempFile(file,RequestVerb.PUT,request.getID());
 
+        if(temp==null)
+            return (new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR));
+
         try(OutputStream output = new FileOutputStream(file)) {
 
             if(format.toLowerCase().contains("text")){
@@ -383,6 +386,9 @@ public class FileManager {
                 return new FileManagerResponse(FileManagerResponse.fileStatus.SERVICE_UNAVAILABLE);
 
             File temp = createTempFile(file,RequestVerb.DELETE,request.getID());
+
+            if(temp==null)
+                return (new FileManagerResponse(FileManagerResponse.fileStatus.INTERNAL_ERROR));
 
             cache.delete(file.getAbsolutePath());
 
@@ -548,7 +554,12 @@ public class FileManager {
         if (!file.getAbsolutePath().contains(slash))
             slash = "\\";
 
-        File temp = new File(fileRoot + slash +  "temp" + slash + Integer.toString(ID));
+        File dir = new File(fileRoot + slash + "web" + slash +  "temp");
+
+        if(!dir.isDirectory())
+            dir.mkdirs();
+
+        File temp = new File(fileRoot + slash + "web" + slash + "temp" + slash + Integer.toString(ID));
 
         try(BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(temp));
                 RandomAccessFile randomAccessFile = new RandomAccessFile(file,"rw")){

@@ -34,11 +34,11 @@ public class HTTPServer {
         if(!readFromPropFile(propertiesFile) || !prop.containsKey("fileRoot")){
             System.out.println("An error has occurred while reading from properties file, please make sure the path is correct" +
                     "and that all the properties are correct and included. Please make sure to include:\n" +
-                    "fileRoot (location of the web directory)\n" +
-                    "cacheSlots (number of slots in the cache)\n" +
-                    "freshTime (Amount in milliseconds of freshness of the cache copy)\n" +
-                    "number_of_threads (number of threads in thread pool)\n" +
-                    "port (port the server will listening)");
+                    "fileRoot (location of the web directory: Must come from properties)\n" +
+                    "cacheSlots (number of slots in the cache: Default 100 )\n" +
+                    "freshTime (Amount in milliseconds of freshness of the cache copy: Default 99999)\n" +
+                    "number_of_threads (number of threads in thread pool: Default 10)\n" +
+                    "port (port the server will listening:D Default 8080)");
             System.exit(1);
         }
 
@@ -70,6 +70,19 @@ public class HTTPServer {
     public HTTPServer(Properties propertiesFile){
         prop = propertiesFile;
 
+        if(!prop.containsKey("fileRoot")){
+            System.out.println("An error has occurred while reading from properties file, please make sure the path is correct" +
+                    "and that all the properties are correct and included. Please make sure to include:\n" +
+                    "fileRoot (location of the web directory: Must come from properties)\n" +
+                    "cacheSlots (number of slots in the cache: Default 100 )\n" +
+                    "freshTime (Amount in milliseconds of freshness of the cache copy: Default 99999)\n" +
+                    "number_of_threads (number of threads in thread pool: Default 10)\n" +
+                    "port (port the server will listening:D Default 8080)");
+            System.exit(1);
+        }
+
+        setDefaultPropValues();
+
         fileRoot = prop.getProperty("fileRoot");
 
         fileManager = new FileManager(Integer.parseInt(prop.getProperty("cacheSlots")), Long.parseLong(prop.getProperty("freshTime")),fileRoot);
@@ -80,6 +93,8 @@ public class HTTPServer {
             e.printStackTrace();
         }
 
+        rollBackNotCompletedRequests();
+
     }
 
     private void rollBackNotCompletedRequests(){
@@ -89,7 +104,7 @@ public class HTTPServer {
         if(fileRoot.contains("/"))
             slash = "/";
 
-        File tempDir = new File(fileRoot + slash + "temp");
+        File tempDir = new File(fileRoot + slash + "web" + slash + "temp");
 
         //There are no files to return
         if(!tempDir.isDirectory())
@@ -101,12 +116,12 @@ public class HTTPServer {
             return;
 
         for(File file : tempFiles){
-            try {
+            try(BufferedReader reader = new BufferedReader(new FileReader(file))) {
 
 
                 /*
                 Formats of temp Files would be as follows:
-                In case of POST:
+                In case of PUT:
                 POST
                 PATH
 
@@ -119,10 +134,10 @@ public class HTTPServer {
                 In case of Post:
                 POST
                 PATH
-                Place where we started to add stuff
+                Length of original file
                 (More Paths in case of delete)
                  */
-                BufferedReader reader = new BufferedReader(new FileReader(file));
+
                 String line = reader.readLine();
 
                 RequestVerb verb = RequestVerb.valueOf(line);
@@ -156,11 +171,10 @@ public class HTTPServer {
                         if(!target.exists())
                             continue;
 
-                        RandomAccessFile postedFile = new RandomAccessFile(target,"rwd");
+                        try(RandomAccessFile postedFile = new RandomAccessFile(target,"rwd")){
+                            postedFile.setLength(bytes);
+                        }
 
-                        postedFile.setLength(bytes);
-
-                        postedFile.close();
                 }
 
             } catch (IOException e) {
@@ -184,7 +198,7 @@ public class HTTPServer {
         }
 
         if(!prop.containsKey("number_of_threads") || !isInt(prop.getProperty("number_of_threads"))){
-            prop.setProperty("number_of_threads","5");
+            prop.setProperty("number_of_threads","10");
         }
 
 
