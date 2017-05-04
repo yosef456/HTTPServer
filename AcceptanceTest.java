@@ -42,7 +42,7 @@ public class AcceptanceTest {
         serverThread = new Thread(runnable);
         serverThread.start();
 
-        Thread.sleep(3000);
+        //Thread.sleep(3000);
 
         File file = new File(fileRoot + "\\web\\interface\\text#html\\en\\test");
 

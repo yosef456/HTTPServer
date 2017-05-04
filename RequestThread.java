@@ -217,7 +217,7 @@ public class RequestThread implements Runnable {
         try {
             respond();
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("An error has occurred in the request thread");
         }
     }
 }
